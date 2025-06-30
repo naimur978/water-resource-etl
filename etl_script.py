@@ -13,9 +13,11 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Create output directory if it doesn't exist
+# Create output directory and its subdirectories
 output_dir = Path("output")
 output_dir.mkdir(exist_ok=True)
+(output_dir / "metadata").mkdir(exist_ok=True)
+(output_dir / "sensor_data").mkdir(exist_ok=True)
 
 # Sensors Data Endpoints
 URL_RESERVOIR_DATA = "http://aca-web.gencat.cat/sdim2/apirest/data/EMBASSAMENT-EST"
@@ -84,11 +86,11 @@ def load_metadata():
     metadata['pluviometer'] = pd.read_csv(METADATA_PATH / "pluviometer_sensors_metadata.csv")
     metadata['piezometer'] = pd.read_csv(METADATA_PATH / "piezometer_sensors_metadata.csv")
     
-    # Create metadata directory if it doesn't exist
-    metadata_dir = Path("metadata")
-    metadata_dir.mkdir(exist_ok=True)
+    # Save metadata files in the output directory
+    metadata_dir = output_dir / "metadata"
     for key in metadata:
         metadata[key].to_csv(metadata_dir / f"{key}_sensors_metadata.csv", index=False)
+        print(f"Saved metadata: {metadata_dir / f'{key}_sensors_metadata.csv'}")
     
     return metadata
 
@@ -157,13 +159,14 @@ async def main():
         ]
     
     # Save updated data to output directory
+    sensor_data_dir = output_dir / "sensor_data"
     for sensor_name, df_sensor_data in zip(
         ["reservoir", "gauge", "pluviometer", "piezometer"],
         list_all_old_data
     ):
-        output_file = output_dir / f"{sensor_name}_sensors_reads.csv"
+        output_file = sensor_data_dir / f"{sensor_name}_sensors_reads.csv"
         df_sensor_data.to_csv(output_file)
-        print(f"Saved {output_file}")
+        print(f"Saved sensor data: {output_file}")
     
     # Print statistics
     print("\nStatistics:")
