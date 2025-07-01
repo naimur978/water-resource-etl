@@ -20,10 +20,10 @@ output_dir.mkdir(exist_ok=True)
 (output_dir / "sensor_data").mkdir(exist_ok=True)
 
 # Sensors Data Endpoints
-URL_RESERVOIR_DATA = "http://aca-web.gencat.cat/sdim2/apirest/data/EMBASSAMENT-EST"
-URL_GAUGE_DATA = "http://aca-web.gencat.cat/sdim2/apirest/data/AFORAMENT-EST"
-URL_PLUVIOMETER_DATA = "http://aca-web.gencat.cat/sdim2/apirest/data/PLUVIOMETREACA-EST"
-URL_PIEZOMETER_DATA = "http://aca-web.gencat.cat/sdim2/apirest/data/PIEZOMETRE-EST"
+URL_RESERVOIR_DATA = "https://aplicacions.aca.gencat.cat/sdim2/apirest/data/EMBASSAMENT-EST"     # updated every 5min
+URL_GAUGE_DATA = "https://aplicacions.aca.gencat.cat/sdim2/apirest/data/AFORAMENT-EST"
+URL_PLUVIOMETER_DATA = "https://aplicacions.aca.gencat.cat/sdim2/apirest/data/PLUVIOMETREACA-EST"
+URL_PIEZOMETER_DATA = "https://aplicacions.aca.gencat.cat/sdim2/apirest/data/PIEZOMETRE-EST"
 
 urls_data = [URL_RESERVOIR_DATA, URL_GAUGE_DATA, URL_PLUVIOMETER_DATA, URL_PIEZOMETER_DATA]
 
