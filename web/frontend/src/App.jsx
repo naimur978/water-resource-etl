@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import DatasetChanges from './components/DatasetChanges';
+import ETLProcessor from './components/ETLProcessor';
 
 function App() {
   const [datasetInfo, setDatasetInfo] = useState(null);
@@ -10,7 +11,7 @@ function App() {
   const fetchDatasetInfo = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5002/dataset/info');
+      const response = await axios.get('http://localhost:5004/dataset/info');
       setDatasetInfo(response.data);
       setError(null);
     } catch (err) {
@@ -49,7 +50,23 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <DatasetChanges datasetInfo={datasetInfo} />
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
+          Water Resource ETL Dashboard
+        </h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {/* Dataset Overview */}
+          <div>
+            <DatasetChanges datasetInfo={datasetInfo} />
+          </div>
+          
+          {/* ETL Processing */}
+          <div>
+            <ETLProcessor onProcessComplete={fetchDatasetInfo} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

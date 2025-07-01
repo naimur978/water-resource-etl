@@ -4,9 +4,8 @@ const DatasetChanges = ({ datasetInfo }) => {
   if (!datasetInfo) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-        <h2 className="text-3xl font-bold mb-8 text-gray-900">Dataset Overview</h2>
+    <div className="bg-white rounded-lg shadow-lg p-8">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 text-center">Dataset Overview</h2>
         
         {/* Stats Section */}
         <div className="space-y-6 mb-8">
@@ -33,7 +32,6 @@ const DatasetChanges = ({ datasetInfo }) => {
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 };
