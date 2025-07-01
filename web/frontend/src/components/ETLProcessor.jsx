@@ -48,6 +48,7 @@ const ETLProcessor = ({ onProcessComplete }) => {
       // Fetch dataset changes after ETL completion
       try {
         const changesResponse = await axios.get('http://localhost:5004/dataset/changes');
+        console.log('Dataset changes response:', changesResponse.data);
         setDatasetChanges(changesResponse.data);
         setShowResults(true);
       } catch (changesErr) {
@@ -158,8 +159,26 @@ const ETLProcessor = ({ onProcessComplete }) => {
         {/* Dataset Changes Results */}
         {showResults && datasetChanges && (
           <div className="w-full mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h4 className="text-lg font-semibold text-blue-900 mb-3">Output Folder Changes</h4>
+            <h4 className="text-lg font-semibold text-blue-900 mb-4">Output Folder Information</h4>
             
+            {/* Output Folder Stats - Make this more prominent */}
+            {datasetChanges.current_info && (
+              <div className="mb-6 p-4 bg-white rounded-lg border-2 border-blue-300">
+                <h5 className="text-lg font-bold text-blue-900 mb-3 text-center">Current Output Folder</h5>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-sm text-gray-600 mb-1">Total Files</div>
+                    <div className="text-2xl font-bold text-blue-600">{datasetChanges.current_info.file_count}</div>
+                  </div>
+                  <div className="text-center p-3 bg-blue-50 rounded-lg">
+                    <div className="text-sm text-gray-600 mb-1">Total Size</div>
+                    <div className="text-2xl font-bold text-blue-600">{datasetChanges.current_info.total_size}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Changes Summary */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="text-center p-3 bg-white rounded-lg">
                 <div className="text-sm text-gray-600">Size Change</div>
@@ -167,15 +186,15 @@ const ETLProcessor = ({ onProcessComplete }) => {
               </div>
               <div className="text-center p-3 bg-white rounded-lg">
                 <div className="text-sm text-gray-600">Added Files</div>
-                <div className="text-lg font-bold text-green-600">{datasetChanges.added_files.length}</div>
+                <div className="text-lg font-bold text-green-600">{datasetChanges.added_files?.length || 0}</div>
               </div>
               <div className="text-center p-3 bg-white rounded-lg">
                 <div className="text-sm text-gray-600">Modified Files</div>
-                <div className="text-lg font-bold text-orange-600">{datasetChanges.modified_files.length}</div>
+                <div className="text-lg font-bold text-orange-600">{datasetChanges.modified_files?.length || 0}</div>
               </div>
             </div>
             
-            {datasetChanges.added_files.length > 0 && (
+            {datasetChanges.added_files && datasetChanges.added_files.length > 0 && (
               <div className="mb-3">
                 <h5 className="text-sm font-medium text-green-800 mb-2">Added Files:</h5>
                 <div className="max-h-24 overflow-y-auto">
@@ -188,7 +207,7 @@ const ETLProcessor = ({ onProcessComplete }) => {
               </div>
             )}
             
-            {datasetChanges.modified_files.length > 0 && (
+            {datasetChanges.modified_files && datasetChanges.modified_files.length > 0 && (
               <div className="mb-3">
                 <h5 className="text-sm font-medium text-orange-800 mb-2">Modified Files:</h5>
                 <div className="max-h-24 overflow-y-auto">
@@ -201,32 +220,14 @@ const ETLProcessor = ({ onProcessComplete }) => {
               </div>
             )}
             
-            {datasetChanges.current_info && (
-              <div className="pt-3 border-t border-blue-200">
-                <h5 className="text-sm font-medium text-blue-800 mb-2">Current Output Folder:</h5>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="text-gray-600">
-                    <span className="font-medium">Total Size:</span> {datasetChanges.current_info.total_size}
-                  </div>
-                  <div className="text-gray-600">
-                    <span className="font-medium">Total Files:</span> {datasetChanges.current_info.file_count}
-                  </div>
-                </div>
+            {(!datasetChanges.added_files || datasetChanges.added_files.length === 0) && 
+             (!datasetChanges.modified_files || datasetChanges.modified_files.length === 0) && (
+              <div className="mb-3 p-3 bg-gray-50 rounded-lg text-center">
+                <p className="text-sm text-gray-600">No new files added or modified in this ETL run.</p>
               </div>
             )}
           </div>
         )}
-      </div>
-      
-      {/* Process Info */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-medium text-gray-900 mb-2">What this process does:</h4>
-        <ul className="text-xs text-gray-600 space-y-1">
-          <li>• Fetches latest sensor readings from all monitoring stations</li>
-          <li>• Updates reservoir, gauge, pluviometer, and piezometer data</li>
-          <li>• Processes and validates the collected data</li>
-          <li>• Updates the dataset files with new information</li>
-        </ul>
       </div>
     </div>
   );
