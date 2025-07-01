@@ -12,6 +12,7 @@
   "dependencies": {
     "@mantine/core": "^8.1.2",
     "@mantine/hooks": "^8.1.2",
+    "@tailwindcss/postcss": "^4.1.11",
     "axios": "^1.10.0",
     "chart.js": "^4.5.0",
     "react": "^19.1.0",
