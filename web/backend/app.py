@@ -23,7 +23,8 @@ api.add_namespace(ns_dataset)
 dataset_info_model = api.model('DatasetInfo', {
     'total_size': fields.String(description='Total size of dataset files'),
     'file_count': fields.Integer(description='Number of files in dataset'),
-    'files': fields.List(fields.String, description='List of files in dataset')
+    'files': fields.List(fields.String, description='List of files in dataset'),
+    'row_counts': fields.Raw(description='Dictionary of row counts for each data file')
 })
 
 # Configure CORS to allow all origins during development
@@ -192,20 +193,54 @@ class UpdateData(Resource):
                 get_sensors_data_day_async(read_date_dt=read_date_dt, groups_cols_ids=groups_cols_ids)
             )
             
-            # Update data files
+            # Update data files by merging with existing data
             for sensor_type, df_sensor in zip(['reservoir', 'gauge', 'pluviometer', 'piezometer'], last_dfs_sensors_day):
                 print(f"Processing {sensor_type} data...")
                 if not df_sensor.empty:
-                    # Save to file with _updated suffix
+                    # Read existing data from the dataset folder
+                    input_file = BASE_DIR / "dataset" / f"{sensor_type}_sensors_reads.csv"
                     output_file = DATA_DIR / f"{sensor_type}_sensors_reads_updated.csv"
-                    print(f"Saving {sensor_type} data to {output_file}")
-                    df_sensor.to_csv(output_file)
-                    print(f"Saved data with shape: {df_sensor.shape}")
+                    
+                    # Load and merge data
+                    try:
+                        if input_file.exists():
+                            print(f"Reading existing data from {input_file}")
+                            existing_df = pd.read_csv(input_file, index_col=0, parse_dates=True)
+                            
+                            # Ensure index is datetime for proper merging
+                            if not isinstance(existing_df.index, pd.DatetimeIndex):
+                                existing_df.index = pd.to_datetime(existing_df.index)
+                            
+                            # Merge existing data with new data
+                            merged_df = pd.concat([existing_df, df_sensor])
+                            # Remove duplicates keeping the latest value
+                            merged_df = merged_df[~merged_df.index.duplicated(keep='last')]
+                            # Sort by datetime index
+                            merged_df.sort_index(inplace=True)
+                            
+                            # Print detailed merge information
+                            overlap_dates = set(existing_df.index) & set(df_sensor.index)
+                            new_dates = set(df_sensor.index) - set(existing_df.index)
+                            print(f"Merged data details for {sensor_type}:")
+                            print(f"- Original data shape: {existing_df.shape}")
+                            print(f"- New data shape: {df_sensor.shape}")
+                            print(f"- Final merged shape: {merged_df.shape}")
+                            print(f"- Overlapping dates: {len(overlap_dates)}")
+                            print(f"- New unique dates: {len(new_dates)}")
+                            print(f"- Date range: {merged_df.index.min()} to {merged_df.index.max()}")
+                            
+                            merged_df.to_csv(output_file)
+                        else:
+                            print(f"No existing data found for {sensor_type}, saving new data only")
+                            df_sensor.to_csv(output_file)
+                    except Exception as e:
+                        print(f"Error processing {sensor_type} data: {str(e)}")
+                        df_sensor.to_csv(output_file)
                 else:
                     print(f"No new data for {sensor_type}")
             
             print("Data update completed successfully")
-            return {'message': 'Data updated successfully'}
+            return {'message': 'Data update and merge completed successfully'}
         except Exception as e:
             print(f"Error updating data: {str(e)}")
             import traceback
@@ -217,6 +252,7 @@ def get_folder_info(folder_name):
     folder_path = os.path.join(BASE_DIR, folder_name)
     total_size = 0
     files = []
+    row_counts = {}
     
     for root, _, filenames in os.walk(folder_path):
         for filename in filenames:
@@ -224,12 +260,23 @@ def get_folder_info(folder_name):
                 filepath = os.path.join(root, filename)
                 size = os.path.getsize(filepath)
                 total_size += size
-                files.append(os.path.relpath(filepath, folder_path))
+                rel_path = os.path.relpath(filepath, folder_path)
+                files.append(rel_path)
+                
+                # Get row count for data files (excluding metadata)
+                if not 'metadata' in rel_path:
+                    try:
+                        df = pd.read_csv(filepath)
+                        row_counts[rel_path] = len(df)
+                    except Exception as e:
+                        print(f"Error reading {filepath}: {str(e)}")
+                        row_counts[rel_path] = 0
     
     return {
         'total_size': f"{total_size / (1024*1024):.2f} MB",
         'file_count': len(files),
-        'files': sorted(files)
+        'files': sorted(files),
+        'row_counts': row_counts
     }
 
 def get_dataset_info():
