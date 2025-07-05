@@ -86,7 +86,8 @@ urls_data = [URL_RESERVOIR_DATA, URL_GAUGE_DATA, URL_PLUVIOMETER_DATA, URL_PIEZO
 async def get_data_async(session, url):
     try:
         print(f"Fetching data from: {url}")
-        async with session.get(url) as response:
+        timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout
+        async with session.get(url, timeout=timeout) as response:
             if response.status == 200:
                 data = await response.json()
                 print(f"Successfully fetched data from {url}")
@@ -124,10 +125,15 @@ async def get_sensors_data_day_async(read_date_dt=None, groups_cols_ids=None):
     
     all_dfs_sensors_day = []
     
-    async with aiohttp.ClientSession() as session:
+    # Use faster timeout and limit concurrent connections
+    timeout = aiohttp.ClientTimeout(total=30)
+    connector = aiohttp.TCPConnector(limit=5)  # Limit concurrent connections
+    
+    async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
         for cols_ids, url_data in zip(groups_cols_ids, urls_data):
             df_sensor_data_day = pd.DataFrame(columns=cols_ids)
-            time_ranges = [read_date_dt.replace(hour=i, minute=0, second=0, microsecond=0) for i in [0, 6, 12, 18]]
+            # Just get one reading for testing
+            time_ranges = [read_date_dt.replace(hour=12, minute=0, second=0, microsecond=0)]
             
             # Create tasks for all time ranges
             tasks = []
