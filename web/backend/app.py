@@ -38,9 +38,19 @@ def after_request(response):
     return response
 
 # Data paths - using absolute paths
-BASE_DIR = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+if os.environ.get('RENDER'):
+    # In production (Render)
+    BASE_DIR = Path('/opt/render/project/src')
+else:
+    # In development
+    BASE_DIR = Path(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 DATA_DIR = BASE_DIR / "output" / "sensor_data"
 METADATA_DIR = BASE_DIR / "output" / "metadata"
+
+# Create necessary directories
+os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(METADATA_DIR, exist_ok=True)
 
 # Create output directories
 try:
@@ -250,6 +260,10 @@ class UpdateData(Resource):
 def get_folder_info(folder_name):
     """Get information about a specific directory"""
     folder_path = os.path.join(BASE_DIR, folder_name)
+    
+    # Create directory if it doesn't exist
+    os.makedirs(folder_path, exist_ok=True)
+    
     total_size = 0
     files = []
     row_counts = {}
