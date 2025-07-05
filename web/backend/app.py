@@ -298,8 +298,5 @@ class ProcessedDatasetInfo(Resource):
         return get_folder_info('output')
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--port', type=int, default=5002)
-    args = parser.parse_args()
-    app.run(debug=True, port=args.port)
+    port = int(os.environ.get('PORT', 5002))
+    app.run(host='0.0.0.0', port=port)
